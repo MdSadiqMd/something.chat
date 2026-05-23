@@ -39,7 +39,7 @@ async def list_conversations(
                 """
                 SELECT id, title, model_default, provider_default, status, created_at, updated_at
                 FROM conversations
-                WHERE status != 'archived'
+                WHERE status = 'active'
                 ORDER BY updated_at DESC
                 LIMIT $1 OFFSET $2
                 """,
@@ -113,10 +113,10 @@ async def update_conversation(
 async def cancel_conversation(conversation_id: UUID) -> None:
     async with acquire() as conn:
         result = await conn.execute(
-            "UPDATE conversations SET status = 'cancelled', updated_at = NOW() WHERE id = $1",
+            "DELETE FROM conversations WHERE id = $1",
             conversation_id,
         )
-    if result == "UPDATE 0":
+    if result == "DELETE 0":
         raise HTTPException(status_code=404, detail="Conversation not found")
 
 

@@ -3,5 +3,11 @@
   "name": "tanstack-start-app",
   "compatibility_date": "2025-09-02",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry"
+  "main": "@tanstack/react-start/server-entry",
+  "vars": {
+    // Used by the Cloudflare Worker (server functions) — HTTP ok, server-to-server
+    "API_BASE_URL": "http://ec2-35-154-205-179.ap-south-1.compute.amazonaws.com:8000",
+    // Used by the browser (chat streaming) — HTTPS required
+    "VITE_API_BASE_URL": "https://corner-strongly-originally-technique.trycloudflare.com"
+  }
 }
