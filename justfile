@@ -82,6 +82,14 @@ setup:
     @echo "  Start the web dev server:"
     @echo "    just dev-web"
 
+# Server-only setup — no pnpm/Node needed (EC2, VPS, etc.)
+setup-server:
+    just rebuild
+    sleep 10
+    just migrate
+    @echo ""
+    @echo "✓ Backend ready. Test: curl http://localhost:8000/health"
+
 # Starts infra (no rebuild), then launches web dev server in the foreground.
 run:
     just up

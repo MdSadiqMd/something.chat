@@ -1,0 +1,23 @@
+{
+  "name": "@something-chat/examples",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "basic": "tsx src/basic-chat.ts",
+    "multi-provider": "tsx src/multi-provider.ts",
+    "streaming": "tsx src/streaming.ts",
+    "cancel": "tsx src/cancel.ts",
+    "custom-ingestion": "tsx src/custom-ingestion.ts",
+    "multi-turn": "tsx src/multi-turn.ts"
+  },
+  "dependencies": {
+    "@something-chat/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "pnpm@10.24.0"
+}
