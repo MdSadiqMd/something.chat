@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -19,10 +20,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="something.chat API", version="0.1.0", lifespan=lifespan)
 
+# ALLOWED_ORIGINS env var is a comma-separated list of allowed origins.
+# Defaults to "*" (open) when not set — fine for dev/initial deploy.
+# Example: ALLOWED_ORIGINS="https://chat.yourdomain.com,http://localhost:3000"
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "*")
+_origins = [o.strip() for o in _raw_origins.split(",")] if _raw_origins != "*" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_origins,
+    allow_credentials=_raw_origins != "*",   # credentials only when origins are locked down
     allow_methods=["*"],
     allow_headers=["*"],
 )
