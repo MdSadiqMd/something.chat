@@ -1,0 +1,12 @@
+{
+  "name": "something-chat",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "test:sdk": "pnpm --filter @something-chat/sdk test",
+    "build:sdk": "pnpm --filter @something-chat/sdk build"
+  },
+  "devDependencies": {},
+  "packageManager": "pnpm@10.24.0"
+}
