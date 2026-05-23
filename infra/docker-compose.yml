@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chat
+      POSTGRES_DB: something_chat
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chat -d something_chat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Bind-mount overwrites the image's /app/app and /app/migrations so edits
+  # are visible immediately; uvicorn --reload restarts on any .py change.
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://chat:chat@postgres:5432/something_chat
+      REDIS_URL: redis://redis:6379
+    env_file:
+      # LLM provider API keys live here — same file the web app reads
+      - ../apps/web/.dev.vars
+    volumes:
+      - ../apps/api/app:/app/app
+      - ../apps/api/migrations:/app/migrations
+    command: >
+      sh -c "uv run alembic upgrade head &&
+             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Bind-mount keeps /app/app in sync; watchfiles restarts the process on change.
+  worker:
+    build:
+      context: ../workers/ingest
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://chat:chat@postgres:5432/something_chat
+      REDIS_URL: redis://redis:6379
+      REDIS_CONSUMER_NAME: worker-1
+    volumes:
+      - ../workers/ingest/app:/app/app
+    command: >
+      uv run python -m watchfiles "python -m app.main" app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  redis_data:
