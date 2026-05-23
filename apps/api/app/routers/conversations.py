@@ -170,3 +170,18 @@ async def add_message(conversation_id: UUID, body: MessageCreate) -> MessageOut:
     if not row:
         raise HTTPException(status_code=500, detail="Insert failed")
     return MessageOut(**dict(row))
+
+
+@router.delete(
+    "/{conversation_id}/messages/{message_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_message(conversation_id: UUID, message_id: UUID) -> None:
+    async with acquire() as conn:
+        result = await conn.execute(
+            "DELETE FROM messages WHERE id = $1 AND conversation_id = $2",
+            message_id,
+            conversation_id,
+        )
+    if result == "DELETE 0":
+        raise HTTPException(status_code=404, detail="Message not found")
