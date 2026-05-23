@@ -44,11 +44,16 @@ test:
     just test-worker
     @echo "✓ All tests passed"
 
+# Run migrations — uses the API container so no local uv/Python needed.
 migrate:
-    cd apps/api && uv run alembic upgrade head
+    docker compose -f infra/docker-compose.yml exec api uv run alembic upgrade head
 
 migrate-down:
-    cd apps/api && uv run alembic downgrade -1
+    docker compose -f infra/docker-compose.yml exec api uv run alembic downgrade -1
+
+# Run migrations directly via uv (local dev only — needs uv on host).
+migrate-local:
+    cd apps/api && uv run alembic upgrade head
 
 # Bind mounts keep api/app and worker/app in sync — no rebuild needed for
 # Python edits. Use --build only when pyproject.toml or Dockerfile changes.
@@ -75,20 +80,21 @@ format-web:
 setup:
     pnpm install
     just rebuild
-    sleep 8
-    just migrate
+    sleep 15
     @echo ""
     @echo "✓ Infra ready (postgres · redis · api · worker in Docker)."
     @echo "  Start the web dev server:"
     @echo "    just dev-web"
 
 # Server-only setup — no pnpm/Node needed (EC2, VPS, etc.)
+# Migrations run automatically inside the API container on startup.
 setup-server:
     just rebuild
-    sleep 10
-    just migrate
+    @echo "Waiting for API to start and run migrations..."
+    sleep 15
     @echo ""
     @echo "✓ Backend ready. Test: curl http://localhost:8000/health"
+    @echo "  Check logs:          just logs api"
 
 # Starts infra (no rebuild), then launches web dev server in the foreground.
 run:
