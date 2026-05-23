@@ -21,9 +21,17 @@ class StreamEvent:
 
 _PII_PATTERNS = [
     ("email", re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+", re.IGNORECASE), "[EMAIL]"),
-    ("phone", re.compile(r"\b(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"), "[PHONE]"),
+    (
+        "phone",
+        re.compile(r"\b(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"),
+        "[PHONE]",
+    ),
     ("ssn", re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "[SSN]"),
-    ("credit_card", re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"), "[CREDIT_CARD]"),
+    (
+        "credit_card",
+        re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"),
+        "[CREDIT_CARD]",
+    ),
     ("ip_address", re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), "[IP]"),
 ]
 
@@ -46,9 +54,12 @@ class OpenAIAdapter:
 
     def __init__(self, api_key: str, base_url: str | None = None) -> None:
         from openai import AsyncOpenAI
+
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
-    async def stream(self, model: str, messages: list[dict]) -> AsyncIterator[StreamEvent]:
+    async def stream(
+        self, model: str, messages: list[dict]
+    ) -> AsyncIterator[StreamEvent]:
         stream = await self.client.chat.completions.create(
             model=model,
             messages=messages,
@@ -72,10 +83,15 @@ class AnthropicAdapter:
 
     def __init__(self, api_key: str) -> None:
         from anthropic import AsyncAnthropic
+
         self.client = AsyncAnthropic(api_key=api_key)
 
-    async def stream(self, model: str, messages: list[dict]) -> AsyncIterator[StreamEvent]:
-        system_msg = next((m["content"] for m in messages if m["role"] == "system"), None)
+    async def stream(
+        self, model: str, messages: list[dict]
+    ) -> AsyncIterator[StreamEvent]:
+        system_msg = next(
+            (m["content"] for m in messages if m["role"] == "system"), None
+        )
         user_msgs = [
             {"role": m["role"], "content": m["content"]}
             for m in messages
@@ -103,10 +119,13 @@ class GoogleAdapter:
 
     def __init__(self, api_key: str) -> None:
         import google.generativeai as genai
+
         genai.configure(api_key=api_key)
         self.genai = genai
 
-    async def stream(self, model: str, messages: list[dict]) -> AsyncIterator[StreamEvent]:
+    async def stream(
+        self, model: str, messages: list[dict]
+    ) -> AsyncIterator[StreamEvent]:
         history = []
         for m in messages[:-1]:
             if m["role"] == "system":
