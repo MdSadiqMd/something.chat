@@ -1,6 +1,4 @@
 # something.chat
-**Live:** [something-chat.mohammadsadiq4950.workers.dev](https://something_chat.mohammadsadiq4950.workers.dev) - will be taking down after 26-5-2026
-
 
 ## Architecture Overview
 
@@ -210,16 +208,6 @@ inference_logs (
 | **Cancellation** | AbortController → status=cancelled | Full cancel propagates to the LLM provider stream. Partial token count is logged; cost estimate may be slightly off. |
 | **Auth** | None (demo) | No user accounts simplifies the demo but is a hard blocker for production. Would add Cloudflare Access or Convex Auth. |
 | **Cloudflare Tunnel** | Quick tunnel (trycloudflare.com) | Zero config, free. URL changes on restart. Production should use a named tunnel with a stable subdomain. |
-
-## What I Would Improve With More Time
-
-1. **Rewrite the ingest worker in Go or Rust** - The current Python worker is correct but carries unnecessary overhead for a pure data pipeline. Go in particular is a natural fit: goroutines give native parallelism without the GIL, `pgx` is one of the fastest Postgres drivers available, `go-redis` has first-class Streams support, and the compiled binary shrinks the Docker image from ~200 MB (Python + uv + deps) to ~10 MB (scratch + binary). The worker has no LLM calls and no web framework — exactly the CPU/IO-bound workload where Go or Rust pays off most. The Redis Streams interface and Postgres schema stay identical; only the consumer implementation changes.
-2. **Auth** - Add user accounts (Cloudflare Access for the Workers side, JWT for the API) so conversation history is per-user.
-3. **Named Cloudflare Tunnel** - Stable URL that survives EC2 restarts; add health checks
-4. **Streaming via SDK** - Replace the Python LLM adapters with the TypeScript SDK running in the Cloudflare Worker (hit a streaming-through-serverFn limitation; documented workaround is the Python path).
-5. **Dashboard** - Wire TimescaleDB continuous aggregates to actual charts (recharts/d3) instead of plain tables. Current `/dashboard` route shows the schema working but the UX is minimal.
-6. **k8s Helm chart** - `infra/k8s/` is scaffolded in the architecture doc but not fully implemented. Would add HPA on API + Worker, sealed-secrets for API keys.
-7. **Conversation search** - Full-text search across messages using Postgres `tsvector`. Schema is ready; endpoint is not.
 
 ## Tech Stack
 
